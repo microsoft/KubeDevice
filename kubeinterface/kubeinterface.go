@@ -35,7 +35,7 @@ func NodeInfoToAnnotation(meta *metav1.ObjectMeta, nodeInfo *types.NodeInfo) err
 	if meta.Annotations == nil {
 		meta.Annotations = make(map[string]string)
 	}
-	meta.Annotations["node.alpha/DeviceInformation"] = string(info)
+	meta.Annotations["KubeDevice/DeviceInfo"] = string(info)
 	klog.V(4).Infof("NodeInfo: %+v converted to Annotations: %v", nodeInfo, meta.Annotations)
 	return nil
 }
@@ -44,7 +44,7 @@ func NodeInfoToAnnotation(meta *metav1.ObjectMeta, nodeInfo *types.NodeInfo) err
 func AnnotationToNodeInfo(meta *metav1.ObjectMeta, existingNodeInfo *types.NodeInfo) (*types.NodeInfo, error) {
 	nodeInfo := types.NewNodeInfo()
 	if meta.Annotations != nil {
-		nodeInfoStr, ok := meta.Annotations["node.alpha/DeviceInformation"]
+		nodeInfoStr, ok := meta.Annotations["KubeDevice/DeviceInfo"]
 		if ok {
 			err := json.Unmarshal([]byte(nodeInfoStr), nodeInfo)
 			if err != nil {
@@ -107,7 +107,7 @@ func KubePodInfoToPodInfo(kubePodInfo *kubev1.Pod, invalidateExistingAnnotations
 	podInfo := types.NewPodInfo()
 	// unmarshal from annotations
 	if kubePodInfo.ObjectMeta.Annotations != nil {
-		podInfoStr, ok := kubePodInfo.ObjectMeta.Annotations["pod.alpha/DeviceInformation"]
+		podInfoStr, ok := kubePodInfo.ObjectMeta.Annotations["KubeDevice/DeviceInfo"]
 		if ok {
 			err := json.Unmarshal([]byte(podInfoStr), podInfo)
 			if err != nil {
@@ -135,7 +135,7 @@ func PodInfoToAnnotation(meta *metav1.ObjectMeta, podInfo *types.PodInfo) error 
 	if meta.Annotations == nil {
 		meta.Annotations = make(map[string]string)
 	}
-	meta.Annotations["pod.alpha/DeviceInformation"] = string(info)
+	meta.Annotations["KubeDevice/DeviceInfo"] = string(info)
 	klog.V(4).Infof("PodInfo: %+v converted to Annotations: %v", podInfo, meta.Annotations)
 	return nil
 }

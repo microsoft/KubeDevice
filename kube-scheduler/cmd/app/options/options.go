@@ -69,6 +69,9 @@ type Options struct {
 	WriteConfigTo string
 
 	Master string
+
+	// Path to device scheduler plugins
+	DeviceSchedulerPluginsPath string
 }
 
 // NewOptions returns default scheduler app options.
@@ -114,6 +117,8 @@ func NewOptions() (*Options, error) {
 	o.SecureServing.ServerCert.PairName = "kube-scheduler"
 	o.SecureServing.BindPort = ports.KubeSchedulerPort
 
+	o.DeviceSchedulerPluginsPath = "/schedulerplugins"
+
 	return o, nil
 }
 
@@ -145,6 +150,8 @@ func (o *Options) Flags() (nfs cliflag.NamedFlagSets) {
 	fs.StringVar(&o.ConfigFile, "config", o.ConfigFile, "The path to the configuration file. Flags override values in this file.")
 	fs.StringVar(&o.WriteConfigTo, "write-config-to", o.WriteConfigTo, "If set, write the configuration values to this file and exit.")
 	fs.StringVar(&o.Master, "master", o.Master, "The address of the Kubernetes API server (overrides any value in kubeconfig)")
+
+	fs.StringVar(&o.DeviceSchedulerPluginsPath, "devschedpath", o.DeviceSchedulerPluginsPath, "The path where device scheduler plugins are located")
 
 	o.SecureServing.AddFlags(nfs.FlagSet("secure serving"))
 	o.CombinedInsecureServing.AddFlags(nfs.FlagSet("insecure serving"))

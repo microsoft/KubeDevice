@@ -32,7 +32,7 @@ func TestConvert(t *testing.T) {
 	jsonNode, _ := json.Marshal(nodeInfo)
 	annotationExpect := map[string]string{
 		"OtherAnnotation":              "OtherAnnotationValue",
-		"node.alpha/DeviceInformation": string(jsonNode),
+		"KubeDevice/DeviceInfo": string(jsonNode),
 		// "NodeInfo/Name": "Node0",
 		// "NodeInfo/Capacity/A": "245",
 		// "NodeInfo/Capacity/B": "300",
@@ -77,7 +77,7 @@ func TestConvert(t *testing.T) {
 			Name: "Pod0",
 			Annotations: map[string]string{
 				"ABCD": "EFGH",
-				"pod.alpha/DeviceInformation": string(jsonStr),
+				"KubeDevice/DeviceInfo": string(jsonStr),
 				// "PodInfo/InitContainer/Init0/Requests/resource/group/gpu/0/cards": "1",
 				// "PodInfo/InitContainer/Init0/Requests/resource/group/gpu/0/memory": "100000",
 				// "PodInfo/RunningContainer/Run0/Requests/resource/group/gpu/A/cards": "4",
@@ -188,7 +188,7 @@ func TestConvert(t *testing.T) {
 	jsonStr, _ = json.Marshal(podInfo)
 	expectedAnnotations := map[string]string{
 		"ABCD": "EFGH", // existing
-		"pod.alpha/DeviceInformation": string(jsonStr),
+		"KubeDevice/DeviceInfo": string(jsonStr),
 		// "PodInfo/InitContainer/Init0/Requests/resource/group/gpu/0/cards": "1",
 		// "PodInfo/InitContainer/Init0/Requests/resource/group/gpu/0/memory": "100000",
 		// "PodInfo/RunningContainer/Run0/Requests/resource/group/gpu/A/cards": "4",
