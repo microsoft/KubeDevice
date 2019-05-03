@@ -587,7 +587,7 @@ func TestNoTopo(t *testing.T) {
 			},
 		},
 	}
-	nodeInfo1 := &kubev1.Node{
+	nodeInfo0 := &kubev1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "Node0",
 		},
@@ -600,9 +600,41 @@ func TestNoTopo(t *testing.T) {
 			},
 		},
 	}
-	nodeInfo2 := &kubev1.Node{
+	nodeInfo1 := &kubev1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "Node1",
+		},
+		Status: kubev1.NodeStatus{
+			Capacity: kubev1.ResourceList{
+				kubev1.ResourceName(gpuplugintypes.ResourceGPU): *resource.NewQuantity(8, resource.DecimalSI),
+			},
+			Allocatable: kubev1.ResourceList{
+				kubev1.ResourceName(gpuplugintypes.ResourceGPU): *resource.NewQuantity(8, resource.DecimalSI),
+			},
+		},
+	}
+	nodeInfo2 := &kubev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "Node2",
+		},
+		Status: kubev1.NodeStatus{
+			Capacity: kubev1.ResourceList{
+				kubev1.ResourceName(gpuplugintypes.ResourceGPU): *resource.NewQuantity(0, resource.DecimalSI),
+			},
+			Allocatable: kubev1.ResourceList{
+				kubev1.ResourceName(gpuplugintypes.ResourceGPU): *resource.NewQuantity(0, resource.DecimalSI),
+			},
+		},
+	}
+	nodeInfo3 := &kubev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "Node3",
+		},
+		Status: kubev1.NodeStatus{},
+	}
+	nodeInfo4 := &kubev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "Node4",
 		},
 		Status: kubev1.NodeStatus{
 			Capacity: kubev1.ResourceList{
@@ -619,36 +651,60 @@ func TestNoTopo(t *testing.T) {
 	dev := &gpuschedulerplugin.NvidiaGPUScheduler{}
 	ds.AddDevice(dev)
 
+	n0, _ := kubeinterface.KubeNodeToNodeInfo(nodeInfo0, nil)
 	n1, _ := kubeinterface.KubeNodeToNodeInfo(nodeInfo1, nil)
 	n2, _ := kubeinterface.KubeNodeToNodeInfo(nodeInfo2, nil)
+	n3, _ := kubeinterface.KubeNodeToNodeInfo(nodeInfo3, nil)
+	n4, _ := kubeinterface.KubeNodeToNodeInfo(nodeInfo4, nil)
+	ds.AddNode(nodeInfo0.ObjectMeta.Name, n0)
 	ds.AddNode(nodeInfo1.ObjectMeta.Name, n1)
 	ds.AddNode(nodeInfo2.ObjectMeta.Name, n2)
+	ds.AddNode(nodeInfo3.ObjectMeta.Name, n3)
+	fmt.Printf("NodeLocationMap:\n%+v\n", gpuschedulerplugin.NodeLocationMap)
+	fmt.Printf("NodeCacheMap:\n%+v\n", gpuschedulerplugin.NodeCacheMap)
+	ds.AddNode(nodeInfo4.ObjectMeta.Name, n4)
+	fmt.Printf("NodeLocationMap:\n%+v\n", gpuschedulerplugin.NodeLocationMap)
+	fmt.Printf("NodeCacheMap:\n%+v\n", gpuschedulerplugin.NodeCacheMap)
+	fmt.Printf("Node: %+v\n", n0)
 	fmt.Printf("Node: %+v\n", n1)
-	modReq := gpuschedulerplugin.TranslateGPUResources(n1.KubeAlloc[gpuplugintypes.ResourceGPU], types.ResourceList{
+	modReq := gpuschedulerplugin.TranslateGPUResources(n0.KubeAlloc[gpuplugintypes.ResourceGPU], types.ResourceList{
 		types.DeviceGroupPrefix + "/gpugrp1/A/gpugrp0/B/gpu/GPU0/cards": int64(1),
-	}, n1.Allocatable)
-	if !reflect.DeepEqual(modReq, n1.Allocatable) {
-		t.Errorf("Alloc not same, expect: %v, have: %v", n1.Allocatable, modReq)
+	}, n0.Allocatable)
+	if !reflect.DeepEqual(modReq, n0.Allocatable) {
+		t.Errorf("Alloc not same, expect: %v, have: %v", n0.Allocatable, modReq)
 	}
-	n1.Allocatable = modReq
-	//fmt.Printf("Node: %+v\n", n1)
+	n0.Allocatable = modReq
+	//fmt.Printf("Node: %+v\n", n0)
 
-	p1, _ := kubeinterface.KubePodInfoToPodInfo(kubePod, false)
-	fmt.Printf("Pod: %+v\n", p1)
+	p0, _ := kubeinterface.KubePodInfoToPodInfo(kubePod, false)
+	fmt.Printf("Pod: %+v\n", p0)
 
-	fits, failures, score := ds.PodFitsResources(p1, n1, false)
+	fits, failures, score := ds.PodFitsResources(p0, n0, false)
 	fmt.Printf("Fit: %v Failures: %v Score: %v\n", fits, failures, score)
 
-	fits, failures, score = ds.PodFitsResources(p1, n2, false)
+	fits, failures, score = ds.PodFitsResources(p0, n1, false)
+	fmt.Printf("Fit: %v Failures: %v Score: %v\n", fits, failures, score)
+
+	fits, failures, score = ds.PodFitsResources(p0, n2, false)
+	fmt.Printf("Fit: %v Failures: %v Score: %v\n", fits, failures, score)
+
+	fits, failures, score = ds.PodFitsResources(p0, n3, false)
 	fmt.Printf("Fit: %v Failures: %v Score: %v\n", fits, failures, score)
 
 	fmt.Printf("Scores: %+v\n", ds.score)
 
-	pri1 := ds.PodPriority(p1, n1)
+	pri0 := ds.PodPriority(p0, n0)
+	fmt.Printf("PodPriority0: %v\n", pri0)
+
+	pri1 := ds.PodPriority(p0, n1)
 	fmt.Printf("PodPriority1: %v\n", pri1)
 
-	pri2 := ds.PodPriority(p1, n2)
-	fmt.Printf("PodPriority2: %v\n", pri2)
+	ds.RemoveNode("Node1")
+	fmt.Printf("NodeLocationMap:\n%+v\n", gpuschedulerplugin.NodeLocationMap)
+	fmt.Printf("NodeCacheMap:\n%+v\n", gpuschedulerplugin.NodeCacheMap)
+	ds.RemoveNode("Node4")
+	fmt.Printf("NodeLocationMap:\n%+v\n", gpuschedulerplugin.NodeLocationMap)
+	fmt.Printf("NodeCacheMap:\n%+v\n", gpuschedulerplugin.NodeCacheMap)
 
 	kdlog.FlushLogs()
 }
