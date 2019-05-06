@@ -101,7 +101,7 @@ the `Capacity` and `Allocatable` fields instead.
 
 The `Used` field is used to denote and how much of each resource is being used, and is primarily used by the scheduler.
 The `Scorer` can be specified for a node, but any `Scorer` specified by the container information will override it.
-The `Scorer` can be used to specify which scoring function to use when determing the node or allocation with the best score.
+The `Scorer` can be used to specify which scoring function to use when determining the node or allocation with the best score.
 
 The pod information is stored in the following.
 ```
@@ -149,7 +149,28 @@ spec:
 
 A scheduler plugin implements the interface specified in
 [https://github.com/Microsoft/KubeDevice-API/blob/master/pkg/devicescheduler/devicescheduler.go].
-The following methods must be implemented by a scheduler plugin
+The following interface methods must be implemented by a scheduler plugin
+```
+type DeviceScheduler interface {
+	// add node and resources
+	AddNode(nodeName string, nodeInfo *types.NodeInfo)
+	// remove node
+	RemoveNode(nodeName string)
+	// see if pod fits on node & return device score
+	PodFitsDevice(nodeInfo *types.NodeInfo, podInfo *types.PodInfo, fillAllocateFrom bool) (bool, []PredicateFailureReason, float64)
+	// allocate resources
+	PodAllocate(nodeInfo *types.NodeInfo, podInfo *types.PodInfo) error
+	// take resources from node
+	TakePodResources(*types.NodeInfo, *types.PodInfo) error
+	// return resources to node
+	ReturnPodResources(*types.NodeInfo, *types.PodInfo) error
+	// GetName returns the name of a device
+	GetName() string
+	// Tells whether group scheduler is being used?
+	UsingGroupScheduler() bool
+}
+```
+Here is an explanation of each method.
 1. `AddNode(nodeName string, nodeInfo *types.NodeInfo)`
 This method is called when a node has been added to the scheduler.  You can use this to configure
 any information your plugin needs when a node is added.
@@ -159,7 +180,7 @@ something when this function is called.
 2. `RemoveNode(nodeName string)`
 Similar to AddNode, this function is called when a node is removed from the scheduler.
 3. `PodFitsDevice(nodeInfo *types.NodeInfo, podInfo *types.PodInfo, fillAllocateFrom bool) (bool, []PredicateFailureReason, float64)`
-You can use informatin in NodeInfo and PodInfo to determine if the pod will fit on a given node, i.e.
+You can use information in NodeInfo and PodInfo to determine if the pod will fit on a given node, i.e.
 constraints specified in podInfo are being met.
 If `fillAllocateFrom` is true, only then do you need to fill the `AllocateFrom` field.
 4. `PodAllocate(nodeInfo *types.NodeInfo, podInfo *types.PodInfo) error`
@@ -190,7 +211,24 @@ For an example, take a look at
 ## CRI plugin
 
 A CRI plugin implements the interface specified in
-[https://github.com/Microsoft/KubeDevice-API/blob/master/pkg/device/device.go]
+[https://github.com/Microsoft/KubeDevice-API/blob/master/pkg/device/device.go], given by the following definition
+```
+type Device interface {
+	// New creates the device and initializes it
+	New() error
+	// Start logically initializes the device
+	Start() error
+	// UpdateNodeInfo - updates a node info structure by writing capacity, allocatable, used, scorer
+	UpdateNodeInfo(*types.NodeInfo) error
+	// Allocate attempts to allocate the devices
+	// Returns list of Mounts, and list of Devices to use
+	// Returns an error on failure.
+	Allocate(*types.PodInfo, *types.ContainerInfo) ([]Mount, []string, map[string]string, error)
+	// GetName returns the name of a device
+	GetName() string
+}
+```
+The methods do the following.
 1. `New() error`
 Simply creates a new device.  Initialization is not done here, and should not usually return an error.
 2. `Start() error`
