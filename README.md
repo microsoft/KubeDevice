@@ -35,6 +35,7 @@ The custom scheduler looks at device predicates and device priority when decidin
 
 To build KubeDevice from source with a `go` installation, simply run the following
 ```
+go get github.com/spf13/pflag
 go get github.com/Microsoft/KubeDevice-API
 go get github.com/Microsoft/KubeDevice
 cd $GOPATH/src/github.com/Microsoft/KubeDevice
