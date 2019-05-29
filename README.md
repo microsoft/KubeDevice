@@ -47,7 +47,7 @@ kube-scheduler
 kubecri
 ```
 
-Alternatively, KubeDevice binaries can be downloaded as a docker image using `docker pull sanjeevm0:customkube:v1.14.1`.
+Alternatively, KubeDevice binaries can be downloaded as a docker image using `docker pull sanjeevm0/customkube:v1.14.1`.
 The same binaries as above will be located in the `/` directory of the container image.
 
 Use `kube-scheduler` exactly with the same arguments as used with the default scheduler. One additional argument is provided
